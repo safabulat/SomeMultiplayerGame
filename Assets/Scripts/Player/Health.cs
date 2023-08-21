@@ -30,6 +30,8 @@ public class Health : NetworkBehaviour
     public float decreaseHealthRequest = 0f;
     public bool isDecreaseHealthCalled = false;
 
+    public bool isPlayerDead = false;
+
     private void Start()
     {
         if (gameObject.tag != "Player")
@@ -46,10 +48,7 @@ public class Health : NetworkBehaviour
         {
             if (gameObject.tag == "Player")
             {
-                Debug.Log("CumHere");
                 skinnedMesh = GetComponentInChildren<SkinnedMeshRenderer>();
-                if(skinnedMesh == null) { Debug.Log("Nope"); }
-                else { Debug.Log("Yea" + OwnerClientId); }
             }
             SetHealthEtc();
         }
@@ -62,7 +61,7 @@ public class Health : NetworkBehaviour
             return;
         }
 
-        if(!isGameStarted)
+        if (!isGameStarted)
         {
             GameManager gm = GameObject.Find("GameManager").GetComponent<GameManager>();
             if (gm == null) { Debug.LogError("GM NULL"); return; }
@@ -70,7 +69,7 @@ public class Health : NetworkBehaviour
             {
                 if (gm.state == GameManager.GameState.Started)
                 {
-                    isGameStarted= true;
+                    isGameStarted = true;
                     SetHealthEtc();
                 }
                 else
@@ -80,8 +79,9 @@ public class Health : NetworkBehaviour
             }
         }
 
-        if(decreaseHealthRequest != 0f && !isDecreaseHealthCalled)
+        if (decreaseHealthRequest > 0f && !isDecreaseHealthCalled)
         {
+            Debug.Log("Should call decreaseHp");
             decreaseHealth(decreaseHealthRequest);
         }
 
@@ -101,9 +101,10 @@ public class Health : NetworkBehaviour
             Debug.Log("BaseDead, Should call destroyer");
             Time.timeScale = 0f;
         }
-        if (player_currentHealth.Value <= 0 && gameObject.tag == "Player")
+        if (player_currentHealth.Value <= 0 && gameObject.tag == "Player" && !isPlayerDead)
         {
             Debug.Log("Player Dead, Should disable");
+            StartCoroutine(PlayerReSpawnTimer());
         }
         if(gameObject.tag == "Player" && skinnedMesh != null)
         {
@@ -165,10 +166,6 @@ public class Health : NetworkBehaviour
             float lerp = Mathf.Clamp01(blinkTimer / blinkDuration);
             float intersity = (lerp * blinkIntensity) + 1f;
             skinnedMesh.material.color = Color.white * intersity;
-        }
-        else
-        {
-            Debug.Log("Skinned Mesh NULL on: " + OwnerClientId);
         }
     }
 
@@ -254,14 +251,33 @@ public class Health : NetworkBehaviour
     [ServerRpc(RequireOwnership = false)]
     public void GetTakenDamageServerRpc(float dmg)
     {
-        Debug.Log("CalledSERV");
+        //Debug.Log("CalledSERV");
         BroadcastClientRpc(dmg);
     }
 
     [ClientRpc]
     public void BroadcastClientRpc(float dmg)
     {
-        Debug.Log("CalledCLI");
+        //Debug.Log("CalledCLI");
         decreaseHealthRequest = dmg;
+    }
+
+    IEnumerator PlayerReSpawnTimer()
+    {
+        PlayerCombatManager pcm = gameObject.GetComponent<PlayerCombatManager>();
+        yield return new WaitForSeconds(.1f);
+        isPlayerDead= true;
+        skinnedMesh.material.color = Color.white * 0;
+        
+        if (pcm != null)
+        {
+            pcm.RespawnAtBase();
+            yield return new WaitForSeconds(pcm.playerReSpawnTime);
+            SetHealthEtc();
+        }
+        else { Debug.Log("pcmNULL"); }
+  
+        isPlayerDead = false;
+        skinnedMesh.material.color = Color.white * 1;
     }
 }

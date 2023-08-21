@@ -10,6 +10,8 @@ public class GameManager : MonoBehaviour
     public int activePlayerCount = 0;
     public int maxPlayerCount = 2;
 
+    public Vector3 teamBasePosRed, teamBasePosBlue;
+
     public enum GameState
     {
         Ready,

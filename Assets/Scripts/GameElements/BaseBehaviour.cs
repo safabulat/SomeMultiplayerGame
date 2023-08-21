@@ -27,16 +27,18 @@ public class BaseBehaviour : NetworkBehaviour
         gm = GameObject.Find("GameManager").GetComponent<GameManager>();
         if (gm == null) { Debug.LogError("GM NULL"); return; }
 
-        if (IsOwner || IsServer)
-        {
-            gm.GameStart += Gm_GameStart;
-            gm.GamePaused += Gm_GamePaused;
-        }        
+        //if (IsOwner || IsServer)
+        //{
+        //    gm.GameStart += Gm_GameStart;
+        //    gm.GamePaused += Gm_GamePaused;
+        //}
+        //gm.GameStart += Gm_GameStart;
+        //gm.GamePaused += Gm_GamePaused;
     }
 
     private void Gm_GamePaused()
     {
-        Debug.Log("EventCalled: Gm_GamePaused");
+        //Debug.Log("EventCalled: Gm_GamePaused");
         if (!IsServer || !IsOwner) { return; }
 
         CancelInvoke(nameof(MinionWaveSpawn));
@@ -47,7 +49,7 @@ public class BaseBehaviour : NetworkBehaviour
 
     private void Gm_GameStart()
     {
-        Debug.Log("EventCalled: Gm_GameStart");
+        //Debug.Log("EventCalled: Gm_GameStart");
         if (!IsServer || !IsOwner) { return; }
 
         InvokeSpawnerServerRpc();

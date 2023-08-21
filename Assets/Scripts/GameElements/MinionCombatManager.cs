@@ -44,7 +44,10 @@ public class MinionCombatManager : CombatManagerBase
             if (combatManager == null) { continue; }
             if (combatManager == this) { continue; }
             if (!IsValidTarget(combatManager)) { continue; }
-            if (!IsThereCloserTarget(nearestTarget.transform.position, combatManager.transform.position)) { return; }
+            if(nearestTarget != null)
+            {
+                if (!IsThereCloserTarget(nearestTarget.transform.position, combatManager.transform.position)) { return; }
+            }
             nearestTarget = combatManager;
         }
 

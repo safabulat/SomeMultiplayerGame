@@ -9,26 +9,28 @@ public class ProjectileBehaviour : NetworkBehaviour
     public GameObject target;
     public float damage;
 
-    private ulong ownerClientId; // Store the owner's client ID
-
     public override void OnNetworkSpawn()
     {
         base.OnNetworkSpawn();
-
-        // Set the owner client ID
-        ownerClientId = NetworkObject.OwnerClientId;
     }
 
     private void Update()
     {
-        if (!IsServer)
-            return;
+        //if (!IsServer)
+        //    return;
 
         if (target == null)
         {
-            DestroyProjectile();
+            //DestroyProjectile();
             return;
         }
+        var targetHM = target.gameObject.GetComponent<Health>();
+
+        if (targetHM == null)
+        {
+            return;
+        }
+        if(targetHM.isPlayerDead) { DestroyProjectile(); }
 
         Vector3 directionToTarget = (target.transform.position - transform.position).normalized;
         transform.position += directionToTarget * projectileSpeed * Time.deltaTime;
@@ -36,8 +38,8 @@ public class ProjectileBehaviour : NetworkBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
-        if (!IsServer)
-            return;
+        //if (!IsServer)
+        //    return;
 
         var targetHM = other.gameObject.GetComponent<Health>();
 
@@ -47,7 +49,7 @@ public class ProjectileBehaviour : NetworkBehaviour
         }
 
         // Check if the owner is trying to destroy the projectile
-        if (NetworkObject.OwnerClientId == ownerClientId)
+        if (IsServer && IsOwner)
         {
             DestroyProjectile();
         }

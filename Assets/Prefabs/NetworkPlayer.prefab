@@ -1377,7 +1377,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 362703f84c84fed4080272e511154448, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  type: 0
+  type: 1
   team: 2
   rangedProjectilePrefab: {fileID: 5306544575212800396, guid: ad683f21887a4c84592b79649d4678a2, type: 3}
   meleeHolder: {fileID: 0}
@@ -1389,10 +1389,14 @@ MonoBehaviour:
   meleeAttackRange: 2.5
   rangedAttackRange: 10
   attackCoolDownTime: 1
-  teamBasePos:
-    m_InternalValue: {x: 0, y: 0, z: 0}
-  TeamBasePos: {x: 0, y: 0, z: 0}
+  networkTeams:
+    m_InternalValue: -1
   thisID: 0
+  teamBasePos: {x: 49.54, y: 0.06, z: 1.23}
+  isPlayerDead: 0
+  playerReSpawnTime: 5
+  networkTeamBase:
+    m_InternalValue: {x: 0, y: 0, z: 0}
 --- !u!114 &1304884902506383737
 MonoBehaviour:
   m_ObjectHideFlags: 0
