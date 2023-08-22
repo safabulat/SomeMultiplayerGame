@@ -34,7 +34,20 @@ public class BaseBehaviour : NetworkBehaviour
         //}
         //gm.GameStart += Gm_GameStart;
         //gm.GamePaused += Gm_GamePaused;
+        InvokeRepeating(nameof(ActivateEventListeners), 0f, .1f);
     }
+
+    private void ActivateEventListeners()
+    {
+        if (IsOwner || IsServer)
+        {
+            gm.GameStart += Gm_GameStart;
+            gm.GamePaused += Gm_GamePaused;
+
+            CancelInvoke(nameof(ActivateEventListeners));
+        }
+    }
+
 
     private void Gm_GamePaused()
     {

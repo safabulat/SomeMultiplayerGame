@@ -15,6 +15,11 @@ public class PlayerCombatManager : CombatManagerBase
     GameManager gm = null;
 
     public UnityEvent<float,bool> NotifyUISpawnTime;
+    public UnityEvent<int> NotifyUIKills, NotifyUIDeads, NotifyUIAssists, NotifyUIMinion;
+    public int KillCounter = 0, DeadCounter = 0, AssistCounter = 0, MinionCounter = 0;
+
+    public float targetsHPLeft = 0f;
+    public int targetType = -1;
 
     public override void OnNetworkSpawn()
     {
@@ -61,6 +66,8 @@ public class PlayerCombatManager : CombatManagerBase
             transform.position = teamBasePos;
         }
 
+        InvokeRepeating(nameof(UpdateTeamsServerRpc), 1f, .1f);
+
     }
 
     [ServerRpc(RequireOwnership = true)]
@@ -94,18 +101,24 @@ public class PlayerCombatManager : CombatManagerBase
     [ClientRpc]
     void UpdateTeamsClientRpc()
     {
+        if(networkTeams.Value != 0 && networkTeams.Value != 1) { return; }
         if(networkTeams.Value == 0) { team = Teams.Blue; }
         if(networkTeams.Value == 1) { team = Teams.Red; }
+        CancelInvoke(nameof(UpdateTeamsServerRpc));
     }
 
     void Update()
     {
         if(!IsOwner) { return; }
-        UpdateTeamsServerRpc();
+        if(isPlayerDead) { return; }
+
+        
         if (Input.GetMouseButton(0))
         {
             MouseTarget();
         }
+
+        CheckKDA();
     }
 
     private void MouseTarget()
@@ -151,6 +164,26 @@ public class PlayerCombatManager : CombatManagerBase
         }
     }
 
+    private void CheckKDA()
+    {
+        if(targetsHPLeft <= 0f)
+        {
+            targetsHPLeft = 999f;
+            if(targetType == 1)
+            {
+                KillCounter++;
+                NotifyUIKills?.Invoke(KillCounter);
+            }
+            else if(targetType == 3)
+            {
+                MinionCounter++;
+                NotifyUIMinion?.Invoke(MinionCounter);
+            }
+            targetType = -1;
+        }
+
+    }
+
     public override void Attack(GameObject target, float _damage)
     {
         if(!isAttacking)
@@ -174,7 +207,7 @@ public class PlayerCombatManager : CombatManagerBase
         {
             transform.position = teamBasePos;
             NotifyUISpawnTime?.Invoke(playerReSpawnTime, isPlayerDead);
-            playerReSpawnTime += 3;            
+            NotifyUIDeads?.Invoke(DeadCounter);
         }
     }
 }

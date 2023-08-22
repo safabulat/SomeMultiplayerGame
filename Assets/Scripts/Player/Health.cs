@@ -54,7 +54,7 @@ public class Health : NetworkBehaviour
         }
     }
 
-    private void Update()
+    private void FixedUpdate()
     {
         if(!IsOwner)
         {
@@ -104,6 +104,7 @@ public class Health : NetworkBehaviour
         if (player_currentHealth.Value <= 0 && gameObject.tag == "Player" && !isPlayerDead)
         {
             Debug.Log("Player Dead, Should disable");
+            isPlayerDead = true;
             StartCoroutine(PlayerReSpawnTimer());
         }
         if(gameObject.tag == "Player" && skinnedMesh != null)
@@ -265,19 +266,25 @@ public class Health : NetworkBehaviour
     IEnumerator PlayerReSpawnTimer()
     {
         PlayerCombatManager pcm = gameObject.GetComponent<PlayerCombatManager>();
+        ThirdPersonController tpc = gameObject.GetComponent<ThirdPersonController>();
+
+        pcm.isPlayerDead = true;
+        pcm.DeadCounter++;
+        tpc.enabled = false;
+
         yield return new WaitForSeconds(.1f);
-        isPlayerDead= true;
+
         skinnedMesh.material.color = Color.white * 0;
+
+        pcm.RespawnAtBase();
+        yield return new WaitForSeconds(pcm.playerReSpawnTime);
+        pcm.playerReSpawnTime += 3;
+        SetHealthEtc();
         
-        if (pcm != null)
-        {
-            pcm.RespawnAtBase();
-            yield return new WaitForSeconds(pcm.playerReSpawnTime);
-            SetHealthEtc();
-        }
-        else { Debug.Log("pcmNULL"); }
-  
-        isPlayerDead = false;
         skinnedMesh.material.color = Color.white * 1;
+
+        tpc.enabled = true;
+        pcm.isPlayerDead = false;
+        isPlayerDead = false;
     }
 }

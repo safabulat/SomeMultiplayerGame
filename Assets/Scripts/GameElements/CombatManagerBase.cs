@@ -74,6 +74,7 @@ public class CombatManagerBase : NetworkBehaviour
         NetworkObject _projectileNetworkObj = projectile.GetComponent<NetworkObject>();
         var projectileBehavior = projectile.GetComponent<ProjectileBehaviour>();
         projectileBehavior.target = target;
+        projectileBehavior.parent = gameObject;
         projectileBehavior.damage = damage;
 
         _projectileNetworkObj.Spawn(projectile);
