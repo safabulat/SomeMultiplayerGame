@@ -8,16 +8,26 @@ using UnityEngine.Events;
 public class PlayerCombatManager : CombatManagerBase
 {
     public float thisID; //Debug purposes delete later
+
+    //Player SO 
+    PlayerInfoSO playerInfo;
+
+    //Team Base & Spawn Pos
+    [SerializeField] private List<Vector3> spawnPosList;
     public Vector3 teamBasePos = Vector3.zero;
+
     public bool isPlayerDead = false;
     public float playerReSpawnTime;
 
+    //Game Manager
     GameManager gm = null;
 
+    //Events
     public UnityEvent<float,bool> NotifyUISpawnTime;
     public UnityEvent<int> NotifyUIKills, NotifyUIDeads, NotifyUIAssists, NotifyUIMinion;
     public int KillCounter = 0, DeadCounter = 0, AssistCounter = 0, MinionCounter = 0;
 
+    //Target Related
     public float targetsHPLeft = 0f;
     public int targetType = -1;
 
@@ -38,14 +48,12 @@ public class PlayerCombatManager : CombatManagerBase
                     teamBasePos = gm.teamBasePosBlue;
                     networkTeams.Value = 0;
                     teamBasePos = gm.teamBasePosBlue;
-                    //ChangeTeamServerRpc(0);
                 }
                 else if (gm.thisPlayerSelectedTeam == 1)
                 {
                     teamBasePos = gm.teamBasePosRed;
                     networkTeams.Value = 1;
                     teamBasePos = gm.teamBasePosRed;
-                    //ChangeTeamServerRpc(1);
                 }
             }
         }
@@ -74,8 +82,6 @@ public class PlayerCombatManager : CombatManagerBase
     private void ChangeTeamServerRpc(int team)
     {
         Debug.Log("ID: " + thisID);
-
-        Vector3 offset = new Vector3(1, 0, 0);
 
         if (team == 0)
         {

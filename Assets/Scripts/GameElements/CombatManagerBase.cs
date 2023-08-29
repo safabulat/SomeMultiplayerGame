@@ -42,37 +42,41 @@ public class CombatManagerBase : NetworkBehaviour
 
     public virtual void Attack(GameObject target, float damage)
     {
-        this.target = target;
-        this.damage = damage;
+
 
         if(target == null) { Debug.Log("NoTargetAtAll"); return; }
 
         switch (type)
         {
             case CombatType.Melee:
+                this.target = target;
+                this.damage = damage;
                 MeleeAttackServerRpc();
                 break;
             case CombatType.Ranged:
-                Debug.Log(gameObject.name + " attacking to " + target.name + " Type: Ranged");
-                RangedAttackServerRpc();
+                Debug.Log(gameObject.name + " attackingXXX to " + target.name + " Type: Ranged");
+                RangedAttackServerRpc(target, damage);
+                break;
+            default:
+                Debug.Log("Unknown attack type: " + type);
                 break;
         }
     }
 
-    [ServerRpc(RequireOwnership = false)]
-    private void MeleeAttackServerRpc()
-    {
-        MeleeAttackClientRpc();
-    }
 
     [ServerRpc(RequireOwnership = false)]
-    private void RangedAttackServerRpc()
+    private void RangedAttackServerRpc(NetworkObjectReference networkObjectReference, float damage)
     {
-        if (target == null) { Debug.Log("No Target"); return; } 
-
+        networkObjectReference.TryGet(out NetworkObject targetNetworkObject);
+        if(targetNetworkObject == null) { Debug.Log("No targetNetworkObject"); return; }
+        GameObject target = targetNetworkObject.gameObject;
+        if (target == null) { Debug.Log("No Target"); return; } else { Debug.Log("Target: " + target.name); }   
         GameObject projectile = Instantiate(rangedProjectilePrefab, projectileSpawnPoint.position, Quaternion.identity);
+        if(projectile == null) { Debug.Log("Projectile Null"); }
         NetworkObject _projectileNetworkObj = projectile.GetComponent<NetworkObject>();
-        var projectileBehavior = projectile.GetComponent<ProjectileBehaviour>();
+        if (_projectileNetworkObj == null) { Debug.Log("_projectileNetworkObj Null"); }
+        ProjectileBehaviour projectileBehavior = projectile.GetComponent<ProjectileBehaviour>();
+        if (_projectileNetworkObj == null) { Debug.Log("projectileBehavior Null"); }
         projectileBehavior.target = target;
         projectileBehavior.parent = gameObject;
         projectileBehavior.damage = damage;
@@ -80,6 +84,12 @@ public class CombatManagerBase : NetworkBehaviour
         _projectileNetworkObj.Spawn(projectile);
 
         Debug.Log(gameObject.name + " shooting a projectile to " + target.name + " Type: Ranged");
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    private void MeleeAttackServerRpc()
+    {
+        MeleeAttackClientRpc();
     }
 
     [ClientRpc]
