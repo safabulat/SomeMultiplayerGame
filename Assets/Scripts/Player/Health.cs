@@ -38,6 +38,19 @@ public class Health : NetworkBehaviour
         {
             meshRenderer = GetComponent<MeshRenderer>();
         }
+        if (IsOwner)
+        {
+            GameManager.Instance.OnStateChanged += GameManager_OnStateChanged;
+        }
+    }
+
+    private void GameManager_OnStateChanged(object sender, System.EventArgs e)
+    {
+        if (!GameManager.Instance.IsGameStarted())
+        {
+            Debug.Log("Game aint started, no dmg");
+            decreaseHealthRequest = 0f;
+        }
     }
 
     public override void OnNetworkSpawn()
@@ -63,19 +76,14 @@ public class Health : NetworkBehaviour
 
         if (!isGameStarted)
         {
-            GameManager gm = GameObject.Find("GameManager").GetComponent<GameManager>();
-            if (gm == null) { Debug.LogError("GM NULL"); return; }
+            if (GameManager.Instance.IsGameStarted())
+            {
+                isGameStarted= true;
+                SetHealthEtc();
+            }
             else
             {
-                if (gm.state == GameManager.GameState.Started)
-                {
-                    isGameStarted = true;
-                    SetHealthEtc();
-                }
-                else
-                {
-                    return;
-                }
+                return;
             }
         }
 

@@ -38,8 +38,10 @@ public class ProjectileBehaviour : NetworkBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
-        //if (!IsServer)
-        //    return;
+        if (!IsServer) { return; }
+           
+        if(parent == null) { Debug.Log("Parent Null from Projectile"); return; }
+        if (other.gameObject == null) { Debug.Log("Target Null from Projectile"); return; }
 
         var targetHM = other.gameObject.GetComponent<Health>();
         var parentCombatManager = parent.GetComponent<PlayerCombatManager>();
@@ -59,8 +61,8 @@ public class ProjectileBehaviour : NetworkBehaviour
 
         if(parentCombatManager != null && targetHM != null)
         {
-            parentCombatManager.targetsHPLeft = targetHp;
-            parentCombatManager.targetType = targetType;
+            parentCombatManager.targetsHPLeft.Value = targetHp;
+            parentCombatManager.targetType.Value = targetType;
         }
         else { Debug.Log("Null parent etc"); }
 

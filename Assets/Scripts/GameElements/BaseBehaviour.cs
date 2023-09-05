@@ -24,56 +24,19 @@ public class BaseBehaviour : NetworkBehaviour
 
     private void Start()
     {
-        gm = GameObject.Find("GameManager").GetComponent<GameManager>();
-        if (gm == null) { Debug.LogError("GM NULL"); return; }
-
-        //if (IsOwner || IsServer)
-        //{
-        //    gm.GameStart += Gm_GameStart;
-        //    gm.GamePaused += Gm_GamePaused;
-        //}
-        //gm.GameStart += Gm_GameStart;
-        //gm.GamePaused += Gm_GamePaused;
-        InvokeRepeating(nameof(ActivateEventListeners), 0f, .1f);
+        GameManager.Instance.OnStateChanged += GameManager_OnStateChanged;
     }
 
-    private void ActivateEventListeners()
+    private void GameManager_OnStateChanged(object sender, System.EventArgs e)
     {
-        if (IsOwner || IsServer)
+        if (GameManager.Instance.IsGameStarted())
         {
-            gm.GameStart += Gm_GameStart;
-            gm.GamePaused += Gm_GamePaused;
+            if (!IsServer || !IsOwner) { return; }
 
-            CancelInvoke(nameof(ActivateEventListeners));
+            InvokeSpawnerServerRpc();
+            isSpawnerActive = true;
+            Debug.Log("SpawnerCalled");
         }
-    }
-
-
-    private void Gm_GamePaused()
-    {
-        //Debug.Log("EventCalled: Gm_GamePaused");
-        if (!IsServer || !IsOwner) { return; }
-
-        CancelInvoke(nameof(MinionWaveSpawn));
-        isSpawnerActive = false;
-        Debug.Log("SpawnerPaused");
-        gm.GameStart += Gm_GameStart;
-    }
-
-    private void Gm_GameStart()
-    {
-        //Debug.Log("EventCalled: Gm_GameStart");
-        if (!IsServer || !IsOwner) { return; }
-
-        InvokeSpawnerServerRpc();
-        isSpawnerActive = true;
-        Debug.Log("SpawnerCalled");
-        gm.GameStart-= Gm_GameStart;
-    }
-
-    private void Update()
-    {
-
     }
 
     private void MinionWaveSpawn()

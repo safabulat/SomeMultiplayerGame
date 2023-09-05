@@ -29,7 +29,7 @@ public class CombatManagerBase : NetworkBehaviour
     public bool isTargetable;
     public float currentAttackRange, meleeAttackRange, rangedAttackRange;
     public float attackCoolDownTime = 1;
-    protected bool isAttacking = false;
+    protected bool isAttacking = false, canIAttack = true;
 
     public NetworkVariable<int> networkTeams = new NetworkVariable<int>(
         -1,
@@ -39,28 +39,41 @@ public class CombatManagerBase : NetworkBehaviour
 
     private GameObject target = null; // Store the target as a GameObject
 
-
-    public virtual void Attack(GameObject target, float damage)
+    private void Start()
     {
-
-
-        if(target == null) { Debug.Log("NoTargetAtAll"); return; }
-
-        switch (type)
+        if(IsOwner)
         {
-            case CombatType.Melee:
-                this.target = target;
-                this.damage = damage;
-                MeleeAttackServerRpc();
-                break;
-            case CombatType.Ranged:
-                Debug.Log(gameObject.name + " attackingXXX to " + target.name + " Type: Ranged");
-                RangedAttackServerRpc(target, damage);
-                break;
-            default:
-                Debug.Log("Unknown attack type: " + type);
-                break;
+            GameManager.Instance.OnStateChanged += GameManager_OnStateChanged;
         }
+        
+    }
+
+    private void GameManager_OnStateChanged(object sender, System.EventArgs e)
+    {
+        if(!IsOwner) { return; }
+        Debug.Log("OnStateChangeFromCombat: " + gameObject.name);
+        if (GameManager.Instance.IsGameOver()) { canIAttack = false; }
+    }
+
+    public virtual void Attack(NetworkObjectReference target, float damage)
+    {
+        if (!canIAttack) { return; }
+        DamageDealManager.Instance.DealtDamage(NetworkObject, target);
+        //switch (type)
+        //{
+        //    case CombatType.Melee:
+        //        this.target = target;
+        //        this.damage = damage;
+        //        MeleeAttackServerRpc();
+        //        break;
+        //    case CombatType.Ranged:
+        //        Debug.Log(gameObject.name + " attackingXXX to " + target.name + " Type: Ranged");
+        //        RangedAttackServerRpc(target, damage);
+        //        break;
+        //    default:
+        //        Debug.Log("Unknown attack type: " + type);
+        //        break;
+        //}
     }
 
 

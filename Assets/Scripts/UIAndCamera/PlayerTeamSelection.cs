@@ -12,21 +12,13 @@ public class PlayerTeamSelection : MonoBehaviour
         blueTeam.onClick.AddListener(() =>
         {
             Debug.Log("Team: Blue");
-            GameManager gm = GameObject.Find("GameManager").GetComponent<GameManager>();
-            if (gm != null)
-            {
-                gm.thisPlayerSelectedTeam = 0;
-            }                
+            GameManager.Instance.thisPlayerSelectedTeam = 0;
             Hide();
         });
         redTeam.onClick.AddListener(() =>
         {
             Debug.Log("Team: Red");
-            GameManager gm = GameObject.Find("GameManager").GetComponent<GameManager>();
-            if (gm != null)
-            {
-                gm.thisPlayerSelectedTeam = 1;
-            }
+            GameManager.Instance.thisPlayerSelectedTeam = 1;
             Hide();
         });
     }

@@ -69,7 +69,7 @@ public class MinionCombatManager : CombatManagerBase
         }
     }
 
-    public override void Attack(GameObject target, float _damage)
+    public override void Attack(NetworkObjectReference target, float _damage)
     {
         if (!isAttacking)
         {

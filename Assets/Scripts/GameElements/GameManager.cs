@@ -1,74 +1,106 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Unity.Netcode;
 using UnityEngine;
 
-public class GameManager : MonoBehaviour
+public class GameManager : NetworkBehaviour
 {
-    public event Action GameStart, GamePaused;
+    public static GameManager Instance { get; private set; }
+
+    //public event Action GameStart, GamePaused;
     public int thisPlayerSelectedTeam = -1;
     public int activePlayerCount = 0;
     public int maxPlayerCount = 2;
 
     public Vector3 teamBasePosRed, teamBasePosBlue;
 
+    public event EventHandler OnStateChanged;
+    //add gameTimer and send event to UI
+
     public enum GameState
     {
-        Ready,
-        Started,
-        Paused
+        WaitingToStart,
+        CountdownToStart,
+        GameStarted,
+        GameOver,
     }
-    public GameState state = GameState.Ready;
-    
-    private void Start()
+    private NetworkVariable<GameState> state = new NetworkVariable<GameState>(GameState.WaitingToStart);
+    private NetworkVariable<float> countdownToStartTimer = new NetworkVariable<float>(5f);
+    private NetworkVariable<float> gamePlayingTimer = new NetworkVariable<float>(0f);
+
+    private void Awake()
     {
-        InvokeRepeating(nameof(LimitedUpdate), 0f, .1f);
+        Instance = this;
     }
 
-    void LimitedUpdate()
+    public override void OnNetworkSpawn()
     {
-        Cursor.visible = true;
-        Cursor.lockState = CursorLockMode.None;
-
-        if (activePlayerCount == maxPlayerCount)
-        {
-            state = GameState.Started;
-            
-        }
-        else
-        {
-            state = GameState.Ready;
-        }
-        if (state == GameState.Started)
-        {
-            CancelInvoke(nameof(LimitedUpdate));
-            StartCoroutine(GameStartCountDown());
-        }        
+        state.OnValueChanged += GameState_OnValueChanged;
     }
 
-    //private void OnApplicationFocus(bool focus)
-    //{
-    //    if(focus)
-    //    {
-    //        Cursor.lockState = CursorLockMode.Confined;
-    //        Cursor.visible = true;
-    //    }
-    //    else
-    //    {
-    //        Cursor.lockState = CursorLockMode.None;
-    //        Cursor.visible = true;
-    //    }
-    //}
+    private void Update()
+    {
+        if (!IsServer)
+        {
+            return;
+        }
+
+        switch (state.Value)
+        {
+            case GameState.WaitingToStart:
+                if(NetworkManager.Singleton.ConnectedClients.Count == maxPlayerCount)
+                {
+                    state.Value = GameState.CountdownToStart;
+                }
+                break;
+            case GameState.CountdownToStart:
+                countdownToStartTimer.Value -= Time.deltaTime;
+                if (countdownToStartTimer.Value < 0f)
+                {
+                    state.Value = GameState.GameStarted;
+                }
+                break;
+            case GameState.GameStarted:
+                gamePlayingTimer.Value += Time.deltaTime;
+                break;
+            case GameState.GameOver:
+                break;
+        }
+    }
+
+    private void GameState_OnValueChanged(GameState previousValue, GameState newValue)
+    {
+        OnStateChanged?.Invoke(this, EventArgs.Empty);
+    }
 
     public void AddActivePlayer()
     {
         activePlayerCount++;
     }
 
-    IEnumerator GameStartCountDown()
+    public bool IsGameStarted()
     {
-        yield return new WaitForSeconds(3);
-        GameStart?.Invoke();
+        return state.Value == GameState.GameStarted;
     }
 
+    public bool IsCountdownToStartActive()
+    {
+        return state.Value == GameState.CountdownToStart;
+    }
+
+    public float GetCountdownToStartTimer()
+    {
+        return countdownToStartTimer.Value;
+    }
+
+    public bool IsGameOver()
+    {
+        return state.Value == GameState.GameOver;
+    }
+
+    public bool IsWaitingToStart()
+    {
+        return state.Value == GameState.WaitingToStart;
+    }
 }

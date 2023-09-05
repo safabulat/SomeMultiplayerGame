@@ -70,7 +70,7 @@ public class PlayerUIManager : NetworkBehaviour
 
     void PCM_NotifyDeadTimer(float time, bool isDead)
     {
-        if (!IsOwner) { return; }
+        if (!IsOwner) { Debug.Log("UI not owner: PCM_NotifyDeadTimer"); return; }
         if (isDead)
         {
             Debug.Log("Invoked: PCM_NotifyDeadTimer");
@@ -83,7 +83,7 @@ public class PlayerUIManager : NetworkBehaviour
 
     void PCM_NotifyKills(int kills)
     {
-        if (!IsOwner) { return; }
+        if (!IsOwner) { Debug.Log("UI not owner: PCM_NotifyKills"); return; }
         Debug.Log("Invoked: PCM_NotifyKills");
         _kill = kills;
         UpdateKDAText();
@@ -91,7 +91,7 @@ public class PlayerUIManager : NetworkBehaviour
 
     void PCM_NotifyDeads(int deads)
     {
-        if (!IsOwner) { return; }
+        if (!IsOwner) { Debug.Log("UI not owner: PCM_NotifyDeads"); return; }
         Debug.Log("Invoked: PCM_NotifyDeads");
         _dead = deads;
         UpdateKDAText();
@@ -99,7 +99,7 @@ public class PlayerUIManager : NetworkBehaviour
 
     void PCM_NotifyAssists(int assist)
     {
-        if (!IsOwner) { return; }
+        if (!IsOwner) { Debug.Log("UI not owner: PCM_NotifyAssists"); return; }
         Debug.Log("Invoked: PCM_NotifyAssists");
         _assist = assist;
         UpdateKDAText();
@@ -107,7 +107,7 @@ public class PlayerUIManager : NetworkBehaviour
 
     void PCM_NotifyMinions(int minions)
     {
-        if (!IsOwner) { return; }
+        if (!IsOwner) { Debug.Log("UI not owner: PCM_NotifyMinions"); return; }
         Debug.Log("Invoked: PCM_NotifyMinions");
         _minion = minions;
         UpdateMinionText();

@@ -19,45 +19,36 @@ public class PlayerCombatManager : CombatManagerBase
     public bool isPlayerDead = false;
     public float playerReSpawnTime;
 
-    //Game Manager
-    GameManager gm = null;
-
     //Events
     public UnityEvent<float,bool> NotifyUISpawnTime;
     public UnityEvent<int> NotifyUIKills, NotifyUIDeads, NotifyUIAssists, NotifyUIMinion;
     public int KillCounter = 0, DeadCounter = 0, AssistCounter = 0, MinionCounter = 0;
 
     //Target Related
-    public float targetsHPLeft = 0f;
-    public int targetType = -1;
+    public NetworkVariable<float> targetsHPLeft = new NetworkVariable<float>(999);
+    public NetworkVariable<int> targetType = new NetworkVariable<int>(-1);
 
     public override void OnNetworkSpawn()
     {
 
         base.OnNetworkSpawn();
 
-        gm = GameObject.Find("GameManager").GetComponent<GameManager>();
-
         thisID = OwnerClientId;
-        if (gm != null)
+        if (IsOwner) // && IsClient
         {
-            if (IsOwner) // && IsClient
+            if (GameManager.Instance.thisPlayerSelectedTeam == 0)
             {
-                if(gm.thisPlayerSelectedTeam == 0)
-                {
-                    teamBasePos = gm.teamBasePosBlue;
-                    networkTeams.Value = 0;
-                    teamBasePos = gm.teamBasePosBlue;
-                }
-                else if (gm.thisPlayerSelectedTeam == 1)
-                {
-                    teamBasePos = gm.teamBasePosRed;
-                    networkTeams.Value = 1;
-                    teamBasePos = gm.teamBasePosRed;
-                }
+                teamBasePos = GameManager.Instance.teamBasePosBlue;
+                networkTeams.Value = 0;
+                teamBasePos = GameManager.Instance.teamBasePosBlue;
+            }
+            else if (GameManager.Instance.thisPlayerSelectedTeam == 1)
+            {
+                teamBasePos = GameManager.Instance.teamBasePosRed;
+                networkTeams.Value = 1;
+                teamBasePos = GameManager.Instance.teamBasePosRed;
             }
         }
-
     }
 
     private void Start()
@@ -74,8 +65,7 @@ public class PlayerCombatManager : CombatManagerBase
             transform.position = teamBasePos;
         }
 
-        InvokeRepeating(nameof(UpdateTeamsServerRpc), 1f, .1f);
-
+        InvokeRepeating(nameof(UpdateTeamsServerRpc), .1f, .05f);
     }
 
     [ServerRpc(RequireOwnership = true)]
@@ -124,7 +114,7 @@ public class PlayerCombatManager : CombatManagerBase
             MouseTarget();
         }
 
-        CheckKDA();
+        CheckKDAServerRpc();
     }
 
     private void MouseTarget()
@@ -170,27 +160,37 @@ public class PlayerCombatManager : CombatManagerBase
         }
     }
 
-    private void CheckKDA()
+    [ServerRpc(RequireOwnership = false)]
+    private void CheckKDAServerRpc()
     {
-        if(targetsHPLeft <= 0f)
+        Debug.Log(OwnerClientId + " Calls KDA");
+        if(targetsHPLeft.Value <= 0f)
         {
-            targetsHPLeft = 999f;
-            if(targetType == 1)
+            targetsHPLeft.Value = 999f;
+            
+            if (targetType.Value == 1)
             {
                 KillCounter++;
                 NotifyUIKills?.Invoke(KillCounter);
+                Debug.Log(OwnerClientId + " Invoked NotifyUIKills");
             }
-            else if(targetType == 3)
+            else if(targetType.Value == 3)
             {
                 MinionCounter++;
                 NotifyUIMinion?.Invoke(MinionCounter);
+                Debug.Log(OwnerClientId + " Invoked NotifyUIMinion");
             }
-            targetType = -1;
+            Debug.Log("ZZZNop: " + targetType.Value);
+            targetType.Value = -1;
+        }
+        else
+        {
+            Debug.Log("Nop: " + targetsHPLeft.Value);
         }
 
     }
 
-    public override void Attack(GameObject target, float _damage)
+    public override void Attack(NetworkObjectReference target, float _damage)
     {
         if(!isAttacking)
         {

@@ -7,7 +7,7 @@ using UnityEngine.UI;
 public class MultiplayerUI : MonoBehaviour
 {
     [SerializeField] private Button startHost, startClient;
-    [SerializeField] private GameObject BackgroundIMG;
+    [SerializeField] private GameObject BackgroundIMG, GameStartWaitObj;
 
     private void Awake()
     {
@@ -29,5 +29,6 @@ public class MultiplayerUI : MonoBehaviour
     {
         gameObject.SetActive(false);
         BackgroundIMG.SetActive(false);
+        GameStartWaitObj.SetActive(true);
     }
 }
