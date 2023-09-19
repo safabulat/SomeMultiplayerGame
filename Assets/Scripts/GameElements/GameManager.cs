@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using Unity.Netcode;
+using Unity.VisualScripting;
 using UnityEngine;
 
 public class GameManager : NetworkBehaviour
@@ -18,6 +19,8 @@ public class GameManager : NetworkBehaviour
     public event EventHandler OnStateChanged;
     //add gameTimer and send event to UI
 
+    [SerializeField] private Transform playerPrefab;
+
     public enum GameState
     {
         WaitingToStart,
@@ -29,14 +32,32 @@ public class GameManager : NetworkBehaviour
     private NetworkVariable<float> countdownToStartTimer = new NetworkVariable<float>(5f);
     private NetworkVariable<float> gamePlayingTimer = new NetworkVariable<float>(0f);
 
+    private Dictionary<ulong, bool> playerReadyDictionary;
+
     private void Awake()
     {
         Instance = this;
+
+        playerReadyDictionary = new Dictionary<ulong, bool>();
     }
 
     public override void OnNetworkSpawn()
     {
         state.OnValueChanged += GameState_OnValueChanged;
+
+        if (IsServer)
+        {
+            NetworkManager.Singleton.SceneManager.OnLoadEventCompleted += SceneManager_OnLoadEventCompleted;
+        }
+    }
+
+    private void SceneManager_OnLoadEventCompleted(string sceneName, UnityEngine.SceneManagement.LoadSceneMode loadSceneMode, List<ulong> clientsCompleted, List<ulong> clientsTimedOut)
+    {
+        foreach(ulong client in NetworkManager.Singleton.ConnectedClientsIds)
+        {
+            Transform playerTransform = Instantiate(playerPrefab);
+            playerTransform.GetComponent<NetworkObject>().SpawnAsPlayerObject(client, true);
+        }
     }
 
     private void Update()
@@ -102,5 +123,51 @@ public class GameManager : NetworkBehaviour
     public bool IsWaitingToStart()
     {
         return state.Value == GameState.WaitingToStart;
+    }
+
+    public void StartHost()
+    {
+        NetworkManager.Singleton.ConnectionApprovalCallback += NetworkManager_ConnectionApprovalCallback;
+        NetworkManager.Singleton.StartHost();
+    }
+
+    public void StartClient()
+    {
+        NetworkManager.Singleton.StartClient();
+    }
+
+    private void NetworkManager_ConnectionApprovalCallback(NetworkManager.ConnectionApprovalRequest connectionApprovalRequest, NetworkManager.ConnectionApprovalResponse connectionApprovalResponse)
+    {
+        if (state.Value == GameState.WaitingToStart)
+        {
+            connectionApprovalResponse.Approved = true;
+            connectionApprovalResponse.CreatePlayerObject = true;
+        }
+        else
+        {
+            connectionApprovalResponse.Approved = false;
+        }
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    private void SetPlayerReadyServerRpc(ServerRpcParams serverRpcParams = default)
+    {
+        playerReadyDictionary[serverRpcParams.Receive.SenderClientId] = true;
+
+        bool allClientsReady = true;
+        foreach (ulong clientId in NetworkManager.Singleton.ConnectedClientsIds)
+        {
+            if (!playerReadyDictionary.ContainsKey(clientId) || !playerReadyDictionary[clientId])
+            {
+                // This player is NOT ready
+                allClientsReady = false;
+                break;
+            }
+        }
+
+        if (allClientsReady)
+        {
+            state.Value = GameState.CountdownToStart;
+        }
     }
 }

@@ -37,29 +37,43 @@ public class MinionCombatManager : CombatManagerBase
         Collider[] colliders = Physics.OverlapSphere(transform.position, searchRange);
 
         CombatManagerBase nearestTarget = null;
-
+        NetworkObjectReference? networkObjectReference = null; // Use a nullable NetworkObjectReference
         foreach (var collider in colliders)
         {
             CombatManagerBase combatManager = collider.GetComponent<CombatManagerBase>();
             if (combatManager == null) { continue; }
             if (combatManager == this) { continue; }
             if (!IsValidTarget(combatManager)) { continue; }
-            if(nearestTarget != null)
+            if (nearestTarget != null)
             {
                 if (!IsThereCloserTarget(nearestTarget.transform.position, combatManager.transform.position)) { return; }
             }
             nearestTarget = combatManager;
+
+            // Check if the target has a NetworkObject component and it is spawned
+            NetworkObject targetNetworkObject = combatManager.gameObject.GetComponent<NetworkObject>();
+            if (targetNetworkObject != null && targetNetworkObject.IsSpawned)
+            {
+                networkObjectReference = targetNetworkObject; // Assign a valid NetworkObjectReference
+            }
         }
 
         if (nearestTarget != null)
         {
-            if (IsInAttackRange(nearestTarget.transform.position))
+            if (networkObjectReference.HasValue) // Check if it has a value (not null)
             {
-                Attack(nearestTarget.gameObject, damage);
+                if (IsInAttackRange(nearestTarget.transform.position))
+                {
+                    Attack(networkObjectReference.Value, damage); // Access the value using .Value
+                }
+                else
+                {
+                    minionAgent.SetDestination(nearestTarget.transform.position);
+                }
             }
             else
             {
-                minionAgent.SetDestination(nearestTarget.transform.position);
+                // Handle the case when the target's NetworkObject is not spawned yet or is not available
             }
         }
         else

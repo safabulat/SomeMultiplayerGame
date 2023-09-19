@@ -216,4 +216,13 @@ public class PlayerCombatManager : CombatManagerBase
             NotifyUIDeads?.Invoke(DeadCounter);
         }
     }
+
+    public void FireEventOnKill()
+    {
+        if (IsOwner)
+        {
+            KillCounter++;
+            NotifyUIKills?.Invoke(KillCounter);
+        }
+    }
 }

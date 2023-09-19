@@ -211,6 +211,7 @@ namespace StarterAssets
             cinemachineVirtual.transform.position = new Vector3(transform.position.x + cameraOffset,
                 cinemachineVirtual.transform.position.y,
                 cinemachineVirtual.transform.position.z);
+
         }
 
         private void OnESC()

@@ -14,13 +14,13 @@ public class MultiplayerUI : MonoBehaviour
         startHost.onClick.AddListener(() =>
         {
             Debug.Log("Host");
-            NetworkManager.Singleton.StartHost();
+            GameManager.Instance.StartHost();
             Hide();
         });
         startClient.onClick.AddListener(() =>
         {
             Debug.Log("Client");
-            NetworkManager.Singleton.StartClient();
+            GameManager.Instance.StartClient();
             Hide();
         });
     }

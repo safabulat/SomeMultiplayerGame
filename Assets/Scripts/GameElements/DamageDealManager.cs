@@ -44,14 +44,18 @@ public class DamageDealManager : NetworkBehaviour
         float damagedHP = attackedHP.GetCurrentHealth() - attackerDMG.damage;
         bool dead = damagedHP <= 0;
 
+        if (attackedObj.tag == "Player")
+        {
+            Debug.Log("DamagedHP: " + damagedHP + " flag: " + dead);
+        }
+
         attackedHP.decreaseHealthRequest = attackerDMG.damage;
 
         if(dead && attackedObj.tag == "Player")
         {
+            Debug.Log("Triggered Event");
             PlayerCombatManager playerDMG = attackerObj.GetComponent<PlayerCombatManager>();
-            playerDMG.KillCounter++;
-            if(playerDMG.NotifyUIKills == null) { Debug.Log("EventNull"); }
-            playerDMG.NotifyUIKills?.Invoke(playerDMG.KillCounter);
+            playerDMG.FireEventOnKill();
         }
 
         if(attackerDMG.type == CombatManagerBase.CombatType.Ranged)
